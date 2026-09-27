@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +48,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +85,33 @@ fun ServerListScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selectedRegion by remember { mutableStateOf(CountryUtils.Region.ALL) }
+    var selectedCountryCode by remember { mutableStateOf<String?>(null) }
+
+    val availableCountries = remember(servers) {
+        servers.map { CountryUtils.getCountryInfo(it) }
+            .distinctBy { it.code }
+            .sortedBy { it.name }
+    }
+
+    val filteredServers = remember(servers, selectedRegion, selectedCountryCode) {
+        val matched = servers.filter { server ->
+            val info = CountryUtils.getCountryInfo(server)
+            val regionMatches = when (selectedRegion) {
+                CountryUtils.Region.ALL -> true
+                else -> info.region == selectedRegion
+            }
+            val countryMatches = if (selectedCountryCode == null) true else info.code == selectedCountryCode
+            regionMatches && countryMatches
+        }
+
+        // Sort by lowest latency within filtered group (online servers first, sorted by latencyMs)
+        matched.sortedWith(
+            compareBy<V2RayServer> { !it.isOnline }
+                .thenBy { if (it.isOnline && it.latencyMs > 0) it.latencyMs else Long.MAX_VALUE }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -243,7 +277,14 @@ fun ServerListScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = onAutoSelectBest,
+                            onClick = {
+                                val bestInFiltered = filteredServers.firstOrNull { it.isOnline }
+                                if (bestInFiltered != null) {
+                                    onSelectServer(bestInFiltered)
+                                } else {
+                                    onAutoSelectBest()
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
@@ -334,6 +375,99 @@ fun ServerListScreen(
                     }
                 }
 
+                // Region Filter Chips Row
+                item {
+                    Column {
+                        Text(
+                            text = "REGION FILTER",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(CountryUtils.Region.entries.toTypedArray()) { region ->
+                                val isRegionSelected = (selectedRegion == region && selectedCountryCode == null)
+                                FilterChip(
+                                    selected = isRegionSelected,
+                                    onClick = {
+                                        selectedRegion = region
+                                        selectedCountryCode = null
+                                    },
+                                    label = {
+                                        Text(
+                                            text = region.displayName,
+                                            fontWeight = if (isRegionSelected) FontWeight.Bold else FontWeight.Normal,
+                                            fontSize = 12.sp
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Country Filter Chips Row
+                if (availableCountries.isNotEmpty()) {
+                    item {
+                        Column {
+                            Text(
+                                text = "COUNTRY FILTER",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                item {
+                                    FilterChip(
+                                        selected = selectedCountryCode == null,
+                                        onClick = { selectedCountryCode = null },
+                                        label = {
+                                            Text(
+                                                text = "All Countries 🌐",
+                                                fontWeight = if (selectedCountryCode == null) FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.sp
+                                            )
+                                        }
+                                    )
+                                }
+
+                                items(availableCountries) { country ->
+                                    val isCountrySelected = (selectedCountryCode == country.code)
+                                    FilterChip(
+                                        selected = isCountrySelected,
+                                        onClick = {
+                                            selectedCountryCode = if (isCountrySelected) null else country.code
+                                        },
+                                        label = {
+                                            Text(
+                                                text = "${country.flagEmoji} ${country.name}",
+                                                fontWeight = if (isCountrySelected) FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.sp
+                                            )
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Header title & count
                 item {
                     Row(
@@ -344,7 +478,7 @@ fun ServerListScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "AVAILABLE SERVERS (${servers.size})",
+                            text = "AVAILABLE SERVERS (${filteredServers.size})",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -352,10 +486,10 @@ fun ServerListScreen(
                     }
                 }
 
-                // Servers list items
-                items(servers, key = { it.id }) { server ->
-                    val isSelected = (selectedServer?.id == server.id) || (selectedServer == null && server == servers.firstOrNull())
-                    val isTopBest = servers.firstOrNull { it.isOnline }?.id == server.id
+                // Servers list items (sorted by lowest latency within filtered selection)
+                items(filteredServers, key = { it.id }) { server ->
+                    val isSelected = (selectedServer?.id == server.id) || (selectedServer == null && server == filteredServers.firstOrNull())
+                    val isTopBest = filteredServers.firstOrNull { it.isOnline }?.id == server.id
 
                     ServerListItem(
                         server = server,

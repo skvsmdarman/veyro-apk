@@ -4,10 +4,18 @@ import com.example.veyrobynovadevs.model.V2RayServer
 
 object CountryUtils {
 
+    enum class Region(val displayName: String) {
+        ALL("All Servers 🌐"),
+        AMERICAS("Americas 🌎"),
+        EUROPE("Europe 🇪🇺"),
+        ASIA_PACIFIC("Asia / Pacific 🌏")
+    }
+
     data class CountryInfo(
         val code: String,
         val name: String,
-        val flagEmoji: String
+        val flagEmoji: String,
+        val region: Region
     )
 
     private val countryNameMap = mapOf(
@@ -32,7 +40,36 @@ object CountryUtils {
         "CH" to "Switzerland",
         "PL" to "Poland",
         "ES" to "Spain",
-        "IT" to "Italy"
+        "IT" to "Italy",
+        "AE" to "UAE"
+    )
+
+    private val countryRegionMap = mapOf(
+        "US" to Region.AMERICAS,
+        "CA" to Region.AMERICAS,
+        "BR" to Region.AMERICAS,
+
+        "DE" to Region.EUROPE,
+        "FR" to Region.EUROPE,
+        "NL" to Region.EUROPE,
+        "GB" to Region.EUROPE,
+        "UK" to Region.EUROPE,
+        "FI" to Region.EUROPE,
+        "SE" to Region.EUROPE,
+        "RU" to Region.EUROPE,
+        "CH" to Region.EUROPE,
+        "PL" to Region.EUROPE,
+        "ES" to Region.EUROPE,
+        "IT" to Region.EUROPE,
+
+        "JP" to Region.ASIA_PACIFIC,
+        "SG" to Region.ASIA_PACIFIC,
+        "IN" to Region.ASIA_PACIFIC,
+        "KR" to Region.ASIA_PACIFIC,
+        "AU" to Region.ASIA_PACIFIC,
+        "TR" to Region.ASIA_PACIFIC,
+        "IR" to Region.ASIA_PACIFIC,
+        "AE" to Region.ASIA_PACIFIC
     )
 
     fun getCountryInfo(server: V2RayServer): CountryInfo {
@@ -44,11 +81,13 @@ object CountryUtils {
 
         val name = countryNameMap[code] ?: if (code != "UNKNOWN") code else "Global Proxy"
         val flag = if (existingFlag != null) existingFlag else if (code != "UNKNOWN") countryCodeToEmoji(code) else "🌐"
+        val region = countryRegionMap[code] ?: Region.ALL
 
         return CountryInfo(
             code = code,
             name = name,
-            flagEmoji = flag
+            flagEmoji = flag,
+            region = region
         )
     }
 
@@ -69,22 +108,23 @@ object CountryUtils {
         val lowerName = name.lowercase()
 
         return when {
-            lowerName.contains("us") || lowerName.contains("usa") || lowerName.contains("united states") || lowerName.contains("america") -> "US"
-            lowerName.contains("de") || lowerName.contains("germany") || lowerName.contains("deutschland") -> "DE"
-            lowerName.contains("fr") || lowerName.contains("france") -> "FR"
-            lowerName.contains("nl") || lowerName.contains("netherlands") || lowerName.contains("dutch") -> "NL"
-            lowerName.contains("gb") || lowerName.contains("uk") || lowerName.contains("london") || lowerName.contains("britain") -> "GB"
-            lowerName.contains("fi") || lowerName.contains("finland") -> "FI"
-            lowerName.contains("se") || lowerName.contains("sweden") -> "SE"
-            lowerName.contains("ca") || lowerName.contains("canada") -> "CA"
-            lowerName.contains("jp") || lowerName.contains("japan") || lowerName.contains("tokyo") -> "JP"
-            lowerName.contains("sg") || lowerName.contains("singapore") -> "SG"
-            lowerName.contains("tr") || lowerName.contains("turkey") || lowerName.contains("istanbul") -> "TR"
-            lowerName.contains("ir") || lowerName.contains("iran") -> "IR"
-            lowerName.contains("in") || lowerName.contains("india") -> "IN"
-            lowerName.contains("kr") || lowerName.contains("korea") || lowerName.contains("seoul") -> "KR"
-            lowerName.contains("ch") || lowerName.contains("switzerland") -> "CH"
-            lowerName.contains("pl") || lowerName.contains("poland") -> "PL"
+            lowerName.contains("[us]") || lowerName.contains("us") || lowerName.contains("usa") || lowerName.contains("united states") || lowerName.contains("america") -> "US"
+            lowerName.contains("[de]") || lowerName.contains("de") || lowerName.contains("germany") || lowerName.contains("deutschland") -> "DE"
+            lowerName.contains("[fr]") || lowerName.contains("fr") || lowerName.contains("france") -> "FR"
+            lowerName.contains("[nl]") || lowerName.contains("nl") || lowerName.contains("netherlands") || lowerName.contains("dutch") -> "NL"
+            lowerName.contains("[gb]") || lowerName.contains("[uk]") || lowerName.contains("uk") || lowerName.contains("london") || lowerName.contains("britain") -> "GB"
+            lowerName.contains("[fi]") || lowerName.contains("fi") || lowerName.contains("finland") -> "FI"
+            lowerName.contains("[se]") || lowerName.contains("se") || lowerName.contains("sweden") -> "SE"
+            lowerName.contains("[ca]") || lowerName.contains("ca") || lowerName.contains("canada") -> "CA"
+            lowerName.contains("[jp]") || lowerName.contains("jp") || lowerName.contains("japan") || lowerName.contains("tokyo") -> "JP"
+            lowerName.contains("[sg]") || lowerName.contains("sg") || lowerName.contains("singapore") -> "SG"
+            lowerName.contains("[tr]") || lowerName.contains("tr") || lowerName.contains("turkey") || lowerName.contains("istanbul") -> "TR"
+            lowerName.contains("[ir]") || lowerName.contains("ir") || lowerName.contains("iran") -> "IR"
+            lowerName.contains("[in]") || lowerName.contains("in") || lowerName.contains("india") -> "IN"
+            lowerName.contains("[kr]") || lowerName.contains("kr") || lowerName.contains("korea") || lowerName.contains("seoul") -> "KR"
+            lowerName.contains("[ae]") || lowerName.contains("uae") || lowerName.contains("dubai") -> "AE"
+            lowerName.contains("[ch]") || lowerName.contains("switzerland") -> "CH"
+            lowerName.contains("[pl]") || lowerName.contains("poland") -> "PL"
             else -> detectFromAddress(address)
         }
     }

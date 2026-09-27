@@ -62,6 +62,7 @@ open class VeyroVpnService : VpnService() {
             userActionId: String = UUID.randomUUID().toString()
         ) {
             val gen = globalGenerationCounter.incrementAndGet()
+            VeyroLogger.i(TAG, "CONNECT_SOURCE=$connectSource USER_TAP=$isUserTap selectedServerId=${server.id} selectedServerAddress=${server.address}:${server.port} generation=$gen USER_ACTION_ID=$userActionId")
             VeyroLogger.i(TAG, "CONNECT_REQUEST source=$connectSource userActionId=$userActionId serverId=${server.id} serverAddress=${server.address}:${server.port} generation=$gen")
 
             val intent = Intent(context, VeyroVpnService::class.java).apply {
@@ -81,13 +82,24 @@ open class VeyroVpnService : VpnService() {
         fun stopVpn(context: Context) {
             val gen = globalGenerationCounter.get()
             VeyroLogger.i(TAG, "USER_DISCONNECT_REQUEST generation=$gen")
-            
-            // Explicitly tear down via ActivityManager
-            val stopIntent = Intent(context, VeyroVpnService::class.java)
-            context.stopService(stopIntent)
+            VeyroLogger.i(TAG, "VPN_STOP_REQUEST generation=$gen reason=UserToggle caller=UserUI")
 
-            // Hard disconnect directly inside the active instance to guarantee resource cleanup
-            activeInstance?.performHardDisconnect("UserToggle")
+            val instance = activeInstance
+            if (instance != null) {
+                instance.performHardDisconnect("UserToggle")
+            } else {
+                val intent = Intent(context, VeyroVpnService::class.java).apply {
+                    action = ACTION_DISCONNECT
+                }
+                context.startService(intent)
+            }
+
+            try {
+                val stopIntent = Intent(context, VeyroVpnService::class.java)
+                context.stopService(stopIntent)
+            } catch (e: Exception) {
+                VeyroLogger.w(TAG, "stopService failed: ${e.message}")
+            }
         }
 
         init {
@@ -297,10 +309,11 @@ open class VeyroVpnService : VpnService() {
                     }
 
                     return try {
-                        VeyroLogger.i(TAG, "VPN_ESTABLISH_BEGIN instance=$instanceId")
+                        VeyroLogger.i(TAG, "VPN_ESTABLISH_BEGIN instance=$instanceId generation=$generation caller=PlatformInterface.openTun")
                         vpnInterface = builder.establish()
                         val fd = vpnInterface?.fd ?: -1
-                        VeyroLogger.i(TAG, "VPN_ESTABLISH_SUCCESS fd=$fd instance=$instanceId")
+                        val pfdId = System.identityHashCode(vpnInterface)
+                        VeyroLogger.i(TAG, "VPN_ESTABLISH_SUCCESS fd=$fd instance=$instanceId generation=$generation pfdIdentity=$pfdId")
                         VeyroLogger.i(TAG, "TUN_ESTABLISHED generation=$generation fd=$fd")
                         fd
                     } catch (e: Exception) {
@@ -461,9 +474,12 @@ open class VeyroVpnService : VpnService() {
         activeGeneration = -1L // Invalidate generation
         currentState = ServiceState.STOPPING
 
-        VeyroLogger.i(TAG, "VPN_STOP_BEGIN serviceInstance=$instanceId generation=$gen")
+        VeyroLogger.i(TAG, "USER_DISCONNECT_REQUEST serviceInstance=$instanceId generation=$gen")
+        VeyroLogger.i(TAG, "VPN_STOP_BEGIN serviceInstance=$instanceId generation=$gen reason=$reason")
+        VeyroLogger.i(TAG, "VPN_DATA_PLANE_STOP_BEGIN")
 
-        VeyroLogger.i(TAG, "COMMAND_CLIENT_DISCONNECT_BEGIN")
+        // 1. Close CommandClient
+        VeyroLogger.i(TAG, "LIBBOX_DISCONNECT_BEGIN")
         try {
             commandClient?.disconnect()
         } catch (e: Exception) {
@@ -472,17 +488,28 @@ open class VeyroVpnService : VpnService() {
         commandClient = null
         VeyroLogger.i(TAG, "COMMAND_CLIENT_CLOSED")
 
-        VeyroLogger.i(TAG, "LIBBOX_SERVICE_CLOSE_BEGIN")
+        // 2. Shut down sing-box core service via closeService()
+        VeyroLogger.i(TAG, "LIBBOX_CLOSE_BEGIN")
+        try {
+            boxService?.closeService()
+        } catch (e: Exception) {
+            VeyroLogger.w(TAG, "Error in boxService.closeService(): ${e.message}")
+        }
+
+        // 3. Close CommandServer
         try {
             boxService?.close()
         } catch (e: Throwable) {
-            VeyroLogger.w(TAG, "Error closing boxService: ${e.message}")
+            VeyroLogger.w(TAG, "Error in boxService.close(): ${e.message}")
         }
         boxService = null
-        VeyroLogger.i(TAG, "LIBBOX_SERVICE_CLOSE_COMPLETE")
+        VeyroLogger.i(TAG, "LIBBOX_CLOSE_COMPLETE")
         VeyroLogger.i(TAG, "COMMAND_SERVER_CLOSED")
 
+        // 4. Close Android VPN ParcelFileDescriptor
         val fd = vpnInterface?.fd ?: -1
+        val pfdId = System.identityHashCode(vpnInterface)
+        VeyroLogger.i(TAG, "VPN_FD_CLOSE_BEGIN fd=$fd instance=$instanceId pfdIdentity=$pfdId")
         VeyroLogger.i(TAG, "TUN_FD_CLOSE_BEGIN fd=$fd")
         try {
             vpnInterface?.close()
@@ -493,6 +520,7 @@ open class VeyroVpnService : VpnService() {
         VeyroLogger.i(TAG, "TUN_FD_CLOSE_COMPLETE")
         VeyroLogger.i(TAG, "VPN_INTERFACE_NULL=true")
 
+        // 5. Remove Foreground Notification
         try {
             stopForeground(STOP_FOREGROUND_REMOVE)
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as? NotificationManager
@@ -504,6 +532,12 @@ open class VeyroVpnService : VpnService() {
 
         currentServer = null
 
+        // 6. Verify System Teardown
+        VeyroLogger.i(TAG, "SYSTEM_VPN_TEARDOWN_VERIFY_BEGIN")
+        val teardownSuccess = vpnInterface == null && activeInstance == null
+        VeyroLogger.i(TAG, "SYSTEM_VPN_TEARDOWN_VERIFY_RESULT=vpnInterface_null=${vpnInterface == null}_activeInstance_null=${activeInstance == null}_success=$teardownSuccess")
+
+        // 7. Stop Service
         try {
             stopSelf()
         } catch (e: Exception) {

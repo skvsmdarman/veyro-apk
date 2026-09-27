@@ -3,12 +3,13 @@
   "versionName": "1.0.0",
   "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.0.0/Veyro-1.0.0.apk",
   "size": 271564802,
-  "sha256": "8f5f7041045b299572ef2f584167bb84cba78ffb26c2602b0be0756838c7d34b",
+  "sha256": "4ed00debd6c932a91edda7d122391598fb8019fb7d436e71e223a50131e50bcc",
   "mandatory": false,
   "title": "Veyro 1.0.0",
   "changelog": [
-    "Initial public distribution release",
+    "Added Region & Country filter chips to Server List screen",
+    "Automatic server sorting by lowest latency within selected region/country",
     "High-performance VLESS + Reality proxy engine",
-    "Reliable Android VPN lifecycle and auto-update system"
+    "Clean native Android VPN lifecycle & instant disconnect"
   ]
 }
