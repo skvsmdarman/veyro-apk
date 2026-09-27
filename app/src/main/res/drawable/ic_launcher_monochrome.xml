@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer Shield Rim -->
+    <path
+        android:strokeWidth="3.5"
+        android:strokeColor="#FFFFFF"
+        android:fillColor="#00000000"
+        android:pathData="M54,20 L76,27 L76,48 C76,63 67,74 54,83 C41,74 32,63 32,48 L32,27 Z" />
+
+    <!-- Globe Ring -->
+    <path
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:fillColor="#00000000"
+        android:pathData="M54,33 A17,17 0 1,1 53.9,33 Z" />
+
+    <!-- Globe Grid Lines -->
+    <path
+        android:strokeWidth="1.0"
+        android:strokeColor="#FFFFFF"
+        android:fillColor="#00000000"
+        android:pathData="M37,50 L71,50 M54,33 L54,67 M39,41 C45,37 63,37 69,41 M39,59 C45,63 63,63 69,59 M54,33 C43,40 43,60 54,67 M54,33 C65,40 65,60 54,67" />
+
+    <!-- Center V Emblem -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,41 L54,59 L65,41 L59,41 L54,50 L49,41 Z" />
+
+    <!-- Center Diamond Core -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,43 L57.5,47 L54,51 L50.5,47 Z" />
+
+</vector>

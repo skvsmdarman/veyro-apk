@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Layer 1: Ambient Neon Outer Halo Glow behind Shield -->
+    <path android:pathData="M54,15 L81,24 L81,48 C81,67 69,80 54,90 C39,80 27,67 27,48 L27,24 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="27"
+                android:startY="15"
+                android:endX="81"
+                android:endY="90"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#4000F2FE" />
+                <item android:offset="0.5" android:color="#307B2CBF" />
+                <item android:offset="1.0" android:color="#209D4EDD" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Layer 2: Cyber Outer Shield Bevel Frame -->
+    <path android:pathData="M54,18 L78,26 L78,48 C78,64 68,76 54,86 C40,76 30,64 30,48 L30,26 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="18"
+                android:endX="78"
+                android:endY="86"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF00F2FE" />
+                <item android:offset="0.4" android:color="#FF00A8FF" />
+                <item android:offset="0.8" android:color="#FF8A2BE2" />
+                <item android:offset="1.0" android:color="#FFC026D3" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Layer 3: Inner Shield Body (Dark Cyber Armor Core) -->
+    <path android:pathData="M54,22 L74,28 L74,48 C74,62 65,73 54,82 C43,73 34,62 34,48 L34,28 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="22"
+                android:endX="54"
+                android:endY="82"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF0E1626" />
+                <item android:offset="0.6" android:color="#FF0A0E1A" />
+                <item android:offset="1.0" android:color="#FF060812" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Layer 4: Shield Inner Border Accent / Neon Stroke Rim -->
+    <path
+        android:pathData="M54,24 L72,29 L72,48 C72,60 63,71 54,79 C45,71 36,60 36,48 L36,29 Z"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="36"
+                android:startY="24"
+                android:endX="72"
+                android:endY="79"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#8000E5FF" />
+                <item android:offset="0.5" android:color="#40A855F7" />
+                <item android:offset="1.0" android:color="#8000E5FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Layer 5: Cyber Tech Facets / Top Corner Cutouts -->
+    <path
+        android:pathData="M30,26 L38,26 L34,34 Z
+                          M78,26 L70,26 L74,34 Z"
+        android:fillColor="#FF00F2FE" />
+
+    <path
+        android:pathData="M30,48 L35,48 L33,55 Z
+                          M78,48 L73,48 L75,55 Z"
+        android:fillColor="#FFA855F7" />
+
+    <!-- Layer 6: Globe Outer Ring Halo -->
+    <path
+        android:pathData="M54,33 A17,17 0 1,1 53.9,33 Z"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="37"
+                android:startY="33"
+                android:endX="71"
+                android:endY="67"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF00F2FE" />
+                <item android:offset="0.5" android:color="#FF3B82F6" />
+                <item android:offset="1.0" android:color="#FFA855F7" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Layer 7: Globe Grid Lines (Latitude & Longitude) -->
+    <!-- Equator -->
+    <path
+        android:pathData="M37,50 L71,50"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FF00E5FF" />
+
+    <!-- Prime Meridian -->
+    <path
+        android:pathData="M54,33 L54,67"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FF00E5FF" />
+
+    <!-- Latitude Arcs -->
+    <path
+        android:pathData="M39,41 C45,37 63,37 69,41
+                          M39,59 C45,63 63,63 69,59"
+        android:strokeWidth="1.0"
+        android:strokeColor="#B300E5FF"
+        android:fillColor="#00000000" />
+
+    <!-- Longitude Arcs -->
+    <path
+        android:pathData="M54,33 C43,40 43,60 54,67
+                          M54,33 C65,40 65,60 54,67"
+        android:strokeWidth="1.0"
+        android:strokeColor="#B3A855F7"
+        android:fillColor="#00000000" />
+
+    <!-- Layer 8: Cyber Globe Intersections & Glowing Node Dots -->
+    <!-- Poles and Equator Ends -->
+    <path
+        android:pathData="M54,33 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0
+                          M54,67 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0
+                          M37,50 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0
+                          M71,50 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0"
+        android:fillColor="#FF00FFFF" />
+
+    <!-- Grid Intersection Nodes -->
+    <path
+        android:pathData="M45,50 m-1.4,0 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0
+                          M63,50 m-1.4,0 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0
+                          M54,41 m-1.4,0 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0
+                          M54,59 m-1.4,0 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0"
+        android:fillColor="#FFE0E7FF" />
+
+    <!-- Layer 9: Center 'Veyro' Cyber Shield Logo Emblem (V emblem + Lock Diamond) -->
+    <!-- Outer V Logo Shadow/Glow -->
+    <path android:pathData="M43,41 L54,59 L65,41 L59,41 L54,50 L49,41 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="43"
+                android:startY="41"
+                android:endX="65"
+                android:endY="59"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF00F2FE" />
+                <item android:offset="0.5" android:color="#FF00D2FF" />
+                <item android:offset="1.0" android:color="#FFA855F7" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner V Highlight Line -->
+    <path
+        android:pathData="M45,42 L54,57 L63,42"
+        android:strokeWidth="0.8"
+        android:strokeColor="#FFFFFF"
+        android:fillColor="#00000000" />
+
+    <!-- Center Security Lock Core Diamond -->
+    <path
+        android:pathData="M54,43 L57.5,47 L54,51 L50.5,47 Z"
+        android:fillColor="#FFFFFFFF" />
+
+    <path
+        android:pathData="M54,44.5 L56,47 L54,49.5 L52,47 Z"
+        android:fillColor="#FF00F2FE" />
+
+    <!-- Top & Bottom Shield Tip Cyber Beacons -->
+    <path
+        android:pathData="M54,18 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0"
+        android:fillColor="#FF00F2FE" />
+
+    <path
+        android:pathData="M54,86 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0"
+        android:fillColor="#FFA855F7" />
+
+</vector>

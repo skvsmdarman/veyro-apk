@@ -1,0 +1,26 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Exclude keys, keystores, and credentials
+*.jks
+*.keystore
+*.pem
+*.key
+*.pk8
+
+# Exclude generated binaries and temporary scratch archives
+*.apk
+go.zip
+singbox.tar.gz
+sing-box-*/
+*.json
+!update.json
+.agent/
