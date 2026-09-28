@@ -20,21 +20,3 @@ Public Android APK distribution for Veyro VPN.
 
 ---
 
-## Release & Update Process
-
-Every future release of Veyro must follow this exact release workflow to ensure seamless auto-updates:
-
-1. **Version Update:** Increment `versionCode` and update `versionName` in `app/build.gradle.kts`.
-2. **Build Release APK:** Generate a signed release APK using the same release keystore (`veyro-release-key.jks`).
-3. **Calculate Hash & Size:**
-   ```powershell
-   Get-FileHash -Path Veyro-X.X.X.apk -Algorithm SHA256
-   (Get-Item Veyro-X.X.X.apk).Length
-   ```
-4. **Create GitHub Release:** Tag the release (e.g. `v1.1.0`), create a release title, and attach `Veyro-X.X.X.apk` as a public release asset.
-5. **Update Manifest:** Update `update.json` in the `main` branch with the new `versionCode`, `versionName`, `apkUrl`, `size`, and `sha256`.
-6. **Push Manifest:** Commit and push `update.json` to the `main` branch.
-
-> [!CAUTION]
-> **Key Protection Warning:**
-> The same signing key (`veyro-release-key.jks`) MUST be preserved for all future Veyro builds. Never upload or commit the keystore file or keystore passwords to Git.
