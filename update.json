@@ -3,8 +3,8 @@
   "versionName": "1.1.0",
   "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0.apk",
   "size": 271581186,
-  "sha256": "575de1b693e188e80ca3f3c843ecc96ed6fb120f334f1e1b7560de5b07c719cf",
-  "mandatory": true,
+  "sha256": "d2a7a965e9d9e9d685a560e70d170152926a651c15c02d392ee3ce3b779f712f",
+  "mandatory": false,
   "title": "Veyro 1.1.0",
   "changelog": [
     "Added Region and Country filter chips to Server List",
