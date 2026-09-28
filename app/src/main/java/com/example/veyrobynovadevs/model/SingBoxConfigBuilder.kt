@@ -1,9 +1,40 @@
 package com.example.veyrobynovadevs.model
 
+import com.example.veyrobynovadevs.vpn.VeyroLogger
 import org.json.JSONArray
 import org.json.JSONObject
 
 object SingBoxConfigBuilder {
+
+    private const val TAG = "SingBoxConfigBuilder"
+
+    enum class CapabilityState {
+        SUPPORTED,
+        UNSUPPORTED_TRANSPORT,
+        INVALID_URI,
+        INVALID_REALITY_PARAMETERS
+    }
+
+    fun getCapabilityState(server: V2RayServer): CapabilityState {
+        if (!server.protocol.equals("vless", ignoreCase = true)) {
+            return CapabilityState.INVALID_URI
+        }
+        if (server.address.isBlank() || server.port !in 1..65535 || server.uuid.isBlank()) {
+            return CapabilityState.INVALID_URI
+        }
+
+        val isReality = server.security == "reality" || server.tls == "reality" || server.publicKey.isNotEmpty()
+        if (isReality && server.publicKey.isBlank()) {
+            return CapabilityState.INVALID_REALITY_PARAMETERS
+        }
+
+        val supportedTransports = setOf("tcp", "ws", "grpc", "http", "h2", "xhttp")
+        if (server.type.isNotEmpty() && !supportedTransports.contains(server.type.lowercase())) {
+            return CapabilityState.UNSUPPORTED_TRANSPORT
+        }
+
+        return CapabilityState.SUPPORTED
+    }
 
     fun validateServer(server: V2RayServer) {
         require(server.protocol.equals("vless", ignoreCase = true)) {
@@ -19,16 +50,34 @@ object SingBoxConfigBuilder {
             "Invalid server configuration: UUID cannot be empty"
         }
 
-        val isReality = server.security == "reality" || server.tls == "reality"
-        if (isReality || (server.security.isEmpty() && server.publicKey.isNotEmpty())) {
+        val isReality = server.security == "reality" || server.tls == "reality" || server.publicKey.isNotEmpty()
+        if (isReality) {
             require(server.publicKey.isNotBlank()) {
-                "Invalid server configuration: Reality public_key is required and cannot be empty for server '${server.name}'"
+                "Invalid server configuration: Reality public_key (pbk) is required and cannot be empty for server '${server.name}'"
             }
         }
     }
 
     fun buildConfig(server: V2RayServer): String {
         validateServer(server)
+
+        val isReality = server.security == "reality" || server.tls == "reality" || server.publicKey.isNotEmpty()
+        val isTls = server.security == "tls" || isReality || server.tls == "tls"
+
+        val pbkMasked = if (server.publicKey.isNotEmpty()) "${server.publicKey.take(6)}***" else "none"
+        VeyroLogger.i(
+            TAG,
+            "SERVER_PARSE: type=${server.type} security=${server.security} server=${server.address} port=${server.port} sni=${server.sni} pbk_present=${server.publicKey.isNotEmpty()} pbk=$pbkMasked sid_present=${server.shortId.isNotEmpty()} fp=${server.fingerprint} flow=${server.flow} path=${server.path} host=${server.host} serviceName=${server.serviceName}"
+        )
+
+        val supportedFps = setOf("chrome", "firefox", "edge", "safari", "qq", "360", "ios", "android", "random", "randomized")
+        val rawFp = server.fingerprint.lowercase().trim()
+        val validFp = if (supportedFps.contains(rawFp)) rawFp else "chrome"
+
+        VeyroLogger.i(
+            TAG,
+            "CONFIG_MAP: reality_enabled=$isReality server_name=${server.sni} public_key_present=${server.publicKey.isNotEmpty()} short_id_present=${server.shortId.isNotEmpty()} utls_fingerprint=$validFp flow=${server.flow}"
+        )
 
         val root = JSONObject()
 
@@ -69,7 +118,7 @@ object SingBoxConfigBuilder {
         }
         root.put("inbounds", JSONArray().apply { put(tunInbound) })
 
-        // Outbounds - VLESS + Reality
+        // Outbounds - VLESS
         val vlessOutbound = JSONObject().apply {
             put("type", "vless")
             put("tag", "proxy")
@@ -81,9 +130,10 @@ object SingBoxConfigBuilder {
                 put("flow", server.flow)
             }
 
-            if (server.type == "ws" || server.type == "grpc" || server.type == "http") {
+            val transportType = server.type.lowercase()
+            if (transportType == "ws") {
                 val transport = JSONObject().apply {
-                    put("type", server.type)
+                    put("type", "ws")
                     if (server.path.isNotEmpty()) {
                         put("path", server.path)
                     }
@@ -95,12 +145,32 @@ object SingBoxConfigBuilder {
                     }
                 }
                 put("transport", transport)
+            } else if (transportType == "grpc") {
+                val transport = JSONObject().apply {
+                    put("type", "grpc")
+                    val serviceName = server.serviceName.ifEmpty { server.path }
+                    if (serviceName.isNotEmpty()) {
+                        put("service_name", serviceName)
+                    }
+                    put("idle_timeout", "15s")
+                    put("ping_timeout", "15s")
+                    put("permit_without_stream", true)
+                }
+                put("transport", transport)
+            } else if (transportType == "http" || transportType == "h2" || transportType == "xhttp") {
+                val transport = JSONObject().apply {
+                    put("type", if (transportType == "xhttp") "xhttp" else "http")
+                    if (server.path.isNotEmpty()) {
+                        put("path", server.path)
+                    }
+                    if (server.host.isNotEmpty()) {
+                        put("host", JSONArray().apply { put(server.host) })
+                    }
+                }
+                put("transport", transport)
             }
 
             val tls = JSONObject().apply {
-                val isReality = server.security == "reality" || server.tls == "reality" || server.publicKey.isNotEmpty()
-                val isTls = server.security == "tls" || isReality || server.tls == "tls"
-
                 put("enabled", isTls)
                 if (server.sni.isNotEmpty()) {
                     put("server_name", server.sni)
@@ -108,8 +178,6 @@ object SingBoxConfigBuilder {
 
                 val utls = JSONObject().apply {
                     put("enabled", true)
-                    val fp = server.fingerprint.ifEmpty { "chrome" }
-                    val validFp = if (fp == "unsafe" || fp.isBlank()) "chrome" else fp
                     put("fingerprint", validFp)
                 }
                 put("utls", utls)

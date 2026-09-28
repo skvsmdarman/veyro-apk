@@ -3,11 +3,11 @@ package com.example.veyrobynovadevs.model
 import android.util.Base64
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonPrimitive
 import java.net.URI
 import java.net.URLDecoder
 import java.util.UUID
@@ -20,30 +20,18 @@ object V2RayUriParser {
         coerceInputValues = true
     }
 
-    private fun JsonObject.getStr(key: String): String? = (this[key] as? kotlinx.serialization.json.JsonPrimitive)?.content
+    private fun JsonObject.getStr(key: String): String? = (this[key] as? JsonPrimitive)?.content
     private fun JsonObject.getObj(key: String): JsonObject? = this[key] as? JsonObject
     private fun JsonObject.getArr(key: String): JsonArray? = this[key] as? JsonArray
 
-    /**
-     * Entry point to parse text content into V2RayServers.
-     */
     fun parseText(rawContent: String, isCustomImport: Boolean = false): List<V2RayServer> {
         return parseContent(rawContent, isCustomImport)
     }
 
-    /**
-     * Main entry point to parse any content:
-     * - Remote/local JSON formatted with "servers" or "proxies" list and "vless", "url", "config", "link", "uri" fields
-     * - Full Xray/V2Ray client JSON configs (with outbounds, vnext, streamSettings, realitySettings, etc.)
-     * - Simplified JSON server objects or JSON arrays of servers
-     * - Multiline URI configurations (vless://, vmess://, trojan://, ss://)
-     * - Base64 encoded strings (subscriptions or config dumps)
-     */
     fun parseContent(rawContent: String, isCustomImport: Boolean = false): List<V2RayServer> {
         val trimmed = rawContent.trim()
         if (trimmed.isEmpty()) return emptyList()
 
-        // 1. Try parsing directly as JSON (Object or Array)
         if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
             val jsonServers = parseJsonContent(trimmed, isCustomImport)
             if (jsonServers.isNotEmpty()) {
@@ -51,13 +39,11 @@ object V2RayUriParser {
             }
         }
 
-        // 2. Try URI list (line by line)
         val serversFromLines = parseUriLines(trimmed, isCustomImport)
         if (serversFromLines.isNotEmpty()) {
             return serversFromLines
         }
 
-        // 3. Try JSON parsing if not tried before
         if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
             val jsonServers = parseJsonContent(trimmed, isCustomImport)
             if (jsonServers.isNotEmpty()) {
@@ -65,7 +51,6 @@ object V2RayUriParser {
             }
         }
 
-        // 4. Try Base64 decoding
         val decoded = decodeBase64Safe(trimmed)
         if (!decoded.isNullOrEmpty() && decoded != trimmed) {
             val decodedServers = parseContent(decoded, isCustomImport)
@@ -92,9 +77,6 @@ object V2RayUriParser {
         return servers
     }
 
-    /**
-     * Parses a single URI string (VLESS, VMess, Trojan, SS).
-     */
     fun parseSingleUri(uriString: String, isCustomImport: Boolean = false): V2RayServer? {
         val trimmed = uriString.trim()
         return when {
@@ -132,17 +114,24 @@ object V2RayUriParser {
 
             val params = parseQueryParams(queryString)
 
-            val type = params["type"] ?: params["net"] ?: "ws"
-            val security = params["security"] ?: "tls"
+            val type = params["type"] ?: params["net"] ?: "tcp"
+            val security = params["security"] ?: if (params.containsKey("pbk") || params.containsKey("pb") || params.containsKey("publicKey")) "reality" else "tls"
             val path = params["path"] ?: ""
             val host = params["host"] ?: ""
-            val sni = params["sni"] ?: params["peer"] ?: host
-            val publicKey = params["pbk"] ?: params["pb"] ?: params["publicKey"] ?: ""
-            val shortId = params["sid"] ?: params["shortId"] ?: ""
+            val sni = params["sni"] ?: params["peer"] ?: params["serverName"] ?: params["servername"] ?: host
+            val publicKey = params["pbk"] ?: params["pb"] ?: params["publicKey"] ?: params["public_key"] ?: ""
+            val shortId = params["sid"] ?: params["short_id"] ?: params["shortId"] ?: ""
             val flow = params["flow"] ?: ""
             val encryption = params["encryption"] ?: "none"
             val alpn = params["alpn"] ?: ""
             val fingerprint = params["fp"] ?: params["fingerprint"] ?: ""
+            val serviceName = params["serviceName"] ?: params["service_name"] ?: ""
+            val mode = params["mode"] ?: ""
+            val authority = params["authority"] ?: ""
+            val headerType = params["headerType"] ?: params["header_type"] ?: ""
+            val packetEncoding = params["packetEncoding"] ?: params["packet_encoding"] ?: ""
+            val allowInsecure = params["allowInsecure"] == "1" || params["allowInsecure"] == "true" || params["insecure"] == "1" || params["insecure"] == "true"
+            val spx = params["spx"] ?: ""
 
             V2RayServer(
                 id = UUID.nameUUIDFromBytes("vless://$uuid@$address:$port".toByteArray()).toString(),
@@ -163,6 +152,13 @@ object V2RayUriParser {
                 encryption = encryption,
                 alpn = alpn,
                 fingerprint = fingerprint,
+                serviceName = serviceName,
+                mode = mode,
+                authority = authority,
+                headerType = headerType,
+                packetEncoding = packetEncoding,
+                allowInsecure = allowInsecure,
+                spx = spx,
                 isCustom = isCustomImport
             )
         } catch (e: Exception) {
@@ -283,7 +279,7 @@ object V2RayUriParser {
                 for (item in jsonElement) {
                     if (item is JsonObject) {
                         result.addAll(parseJsonObjectToServers(item, isCustomImport))
-                    } else if (item is kotlinx.serialization.json.JsonPrimitive && item.isString) {
+                    } else if (item is JsonPrimitive && item.isString) {
                         val server = parseSingleUri(item.content, isCustomImport)
                         if (server != null) result.add(server)
                     }
@@ -305,14 +301,13 @@ object V2RayUriParser {
             ?: obj.getStr("name")
             ?: obj.getStr("ps")
 
-        // 1. Check if obj contains "servers" array or "proxies" array
         val serverListArr = obj.getArr("servers") ?: obj.getArr("proxies")
         if (serverListArr != null && serverListArr.isNotEmpty()) {
             for (item in serverListArr) {
                 if (item is JsonObject) {
                     val itemServers = parseSingleServerJsonObject(item, isCustomImport)
                     servers.addAll(itemServers)
-                } else if (item is kotlinx.serialization.json.JsonPrimitive && item.isString) {
+                } else if (item is JsonPrimitive && item.isString) {
                     val srv = parseSingleUri(item.content, isCustomImport)
                     if (srv != null) servers.add(srv)
                 }
@@ -322,13 +317,11 @@ object V2RayUriParser {
             }
         }
 
-        // 2. Check if obj itself contains uri/config fields ("vless", "url", "config", "link", "uri")
         val directUriServers = parseUriOrConfigFields(obj, topRemarks, isCustomImport)
         if (directUriServers.isNotEmpty()) {
             return directUriServers
         }
 
-        // 3. Check if full V2Ray / Xray client configuration containing outbounds array or outbound object
         val outboundsArr = obj.getArr("outbounds") ?: obj.getArr("outbound")
         val singleOutboundObj = obj.getObj("outbound")
 
@@ -355,13 +348,11 @@ object V2RayUriParser {
             }
         }
 
-        // 4. Check if single outbound object itself
         val singleOutboundServer = parseOutboundObject(obj, topRemarks, isCustomImport)
         if (singleOutboundServer != null) {
             return listOf(singleOutboundServer)
         }
 
-        // 5. Fallback: Check if flattened server JSON object (e.g., {"address": "...", "port": 443, ...})
         val flattenedServer = parseFlattenedJsonObject(obj, topRemarks, isCustomImport)
         if (flattenedServer != null) {
             return listOf(flattenedServer)
@@ -422,7 +413,6 @@ object V2RayUriParser {
     ): V2RayServer? {
         val protocol = outbound.getStr("protocol")?.lowercase() ?: return null
 
-        // Ignore non-proxy protocols
         val nonProxyProtocols = setOf("freedom", "blackhole", "dokodemo-door", "dns", "loopback")
         if (nonProxyProtocols.contains(protocol)) return null
 
@@ -449,7 +439,7 @@ object V2RayUriParser {
             val vnextObj = vnext[0] as? JsonObject ?: return null
             address = vnextObj.getStr("address") ?: vnextObj.getStr("add") ?: ""
             port = vnextObj.getStr("port")?.toIntOrNull()
-                ?: (vnextObj["port"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull()
+                ?: (vnextObj["port"] as? JsonPrimitive)?.content?.toIntOrNull()
                 ?: 443
 
             val users = vnextObj.getArr("users")
@@ -468,7 +458,7 @@ object V2RayUriParser {
             val srvObj = servers[0] as? JsonObject ?: return null
             address = srvObj.getStr("address") ?: srvObj.getStr("add") ?: ""
             port = srvObj.getStr("port")?.toIntOrNull()
-                ?: (srvObj["port"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull()
+                ?: (srvObj["port"] as? JsonPrimitive)?.content?.toIntOrNull()
                 ?: 443
             uuid = srvObj.getStr("password") ?: srvObj.getStr("id") ?: ""
             encryption = srvObj.getStr("method") ?: "none"
@@ -485,17 +475,18 @@ object V2RayUriParser {
             ?: "tcp"
         val security = streamSettings?.getStr("security") ?: "none"
 
-        // realitySettings
         val realitySettings = streamSettings?.getObj("realitySettings")
             ?: streamSettings?.getObj("realitysettings")
         val realitySni = realitySettings?.getStr("serverName")
             ?: realitySettings?.getStr("sni") ?: ""
         val publicKey = realitySettings?.getStr("publicKey")
+            ?: realitySettings?.getStr("pbk")
             ?: realitySettings?.getStr("pb") ?: ""
         val shortId = realitySettings?.getStr("shortId")
             ?: realitySettings?.getStr("sid") ?: ""
+        val fingerprint = realitySettings?.getStr("fingerprint")
+            ?: realitySettings?.getStr("fp") ?: ""
 
-        // tlsSettings
         val tlsSettings = streamSettings?.getObj("tlsSettings")
             ?: streamSettings?.getObj("tlssettings")
         val tlsSni = tlsSettings?.getStr("serverName")
@@ -504,20 +495,19 @@ object V2RayUriParser {
         val rawServerName = streamSettings?.getStr("serverName") ?: ""
         val sni = if (realitySni.isNotEmpty()) realitySni else if (tlsSni.isNotEmpty()) tlsSni else rawServerName
 
-        // wsSettings
         val wsSettings = streamSettings?.getObj("wsSettings")
             ?: streamSettings?.getObj("wssettings")
         val wsPath = wsSettings?.getStr("path") ?: ""
         val wsHeaders = wsSettings?.getObj("headers")
         val wsHost = wsHeaders?.getStr("Host") ?: wsHeaders?.getStr("host") ?: ""
 
-        // grpcSettings
         val grpcSettings = streamSettings?.getObj("grpcSettings")
             ?: streamSettings?.getObj("grpcsettings")
-        val grpcPath = grpcSettings?.getStr("serviceName") ?: grpcSettings?.getStr("path") ?: ""
+        val serviceName = grpcSettings?.getStr("serviceName")
+            ?: grpcSettings?.getStr("service_name") ?: ""
+        val grpcPath = serviceName.ifEmpty { grpcSettings?.getStr("path") ?: "" }
         val grpcHost = grpcSettings?.getStr("authority") ?: ""
 
-        // httpSettings / h2Settings
         val httpSettings = streamSettings?.getObj("httpSettings")
             ?: streamSettings?.getObj("httpsettings")
             ?: streamSettings?.getObj("h2Settings")
@@ -546,6 +536,8 @@ object V2RayUriParser {
             type = network,
             flow = flow,
             encryption = encryption,
+            fingerprint = fingerprint,
+            serviceName = serviceName,
             isCustom = isCustomImport
         )
     }
@@ -561,7 +553,7 @@ object V2RayUriParser {
             ?: return null
 
         val port = obj.getStr("port")?.toIntOrNull()
-            ?: (obj["port"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull()
+            ?: (obj["port"] as? JsonPrimitive)?.content?.toIntOrNull()
             ?: 443
 
         val name = topRemarks
@@ -582,11 +574,13 @@ object V2RayUriParser {
         val host = obj.getStr("host") ?: ""
         val tls = obj.getStr("tls") ?: "tls"
         val sni = obj.getStr("sni") ?: host
-        val publicKey = obj.getStr("publicKey") ?: obj.getStr("pb") ?: ""
+        val publicKey = obj.getStr("publicKey") ?: obj.getStr("pbk") ?: obj.getStr("pb") ?: ""
         val shortId = obj.getStr("shortId") ?: obj.getStr("sid") ?: ""
         val type = obj.getStr("type") ?: obj.getStr("net") ?: "ws"
         val flow = obj.getStr("flow") ?: ""
         val encryption = obj.getStr("encryption") ?: "none"
+        val fingerprint = obj.getStr("fingerprint") ?: obj.getStr("fp") ?: ""
+        val serviceName = obj.getStr("serviceName") ?: obj.getStr("service_name") ?: ""
 
         return V2RayServer(
             id = obj.getStr("id") ?: UUID.nameUUIDFromBytes("$protocol://$uuid@$address:$port".toByteArray()).toString(),
@@ -605,6 +599,8 @@ object V2RayUriParser {
             type = type,
             flow = flow,
             encryption = encryption,
+            fingerprint = fingerprint,
+            serviceName = serviceName,
             isCustom = isCustomImport
         )
     }
@@ -616,10 +612,14 @@ object V2RayUriParser {
         for (pair in pairs) {
             val idx = pair.indexOf("=")
             if (idx != -1) {
-                val key = pair.substring(0, idx)
-                val value = pair.substring(idx + 1)
-                val decodedVal = try { URLDecoder.decode(value, "UTF-8") } catch (e: Exception) { value }
-                map[key] = decodedVal
+                val rawKey = pair.substring(0, idx)
+                val rawVal = pair.substring(idx + 1)
+                val decodedKey = try { URLDecoder.decode(rawKey, "UTF-8") } catch (e: Exception) { rawKey }
+                val decodedVal = try { URLDecoder.decode(rawVal, "UTF-8") } catch (e: Exception) { rawVal }
+                map[decodedKey] = decodedVal
+            } else if (pair.isNotEmpty()) {
+                val decodedKey = try { URLDecoder.decode(pair, "UTF-8") } catch (e: Exception) { pair }
+                map[decodedKey] = ""
             }
         }
         return map
