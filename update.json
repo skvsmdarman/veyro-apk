@@ -1,14 +1,37 @@
 {
   "versionCode": 2,
   "versionName": "1.1.0",
-  "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0.apk",
-  "size": 271581186,
-  "sha256": "d2a7a965e9d9e9d685a560e70d170152926a651c15c02d392ee3ce3b779f712f",
+  "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0-universal.apk",
+  "size": 95045968,
+  "sha256": "4d0e90b99849f74f5b6a85b8a62ba9c101e8de0c4e406418ad05c74e32dc237d",
+  "variants": {
+    "arm64-v8a": {
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0-arm64-v8a.apk",
+      "size": 25321755,
+      "sha256": "32c6ede9dbd2f3a3fc910358dd575557cc9caa358c664f9debfb2dbe71b1ff0f"
+    },
+    "armeabi-v7a": {
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0-armeabi-v7a.apk",
+      "size": 24825997,
+      "sha256": "ecd5b48a064f24fcf07fcf28c171b0522e7389ef766bc54155d17f3dff31f0ea"
+    },
+    "x86_64": {
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0-x86_64.apk",
+      "size": 26537148,
+      "sha256": "b1c08e94ef5a60e34cb275fcf05fc22c19626747124e56a2ba042160c5319251"
+    },
+    "x86": {
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v1.1.0/Veyro-1.1.0-x86.apk",
+      "size": 27372461,
+      "sha256": "3f25e51226828d8e07715927a6c5276880caf4cf39c928bfa633ebdddef9f54f"
+    }
+  },
   "mandatory": false,
   "title": "Veyro 1.1.0",
   "changelog": [
     "Added Region and Country filter chips to Server List",
     "Automatic server sorting by lowest latency within selected region/country",
+    "ABI-optimized release builds (>85% smaller download size)",
     "Performance and stability improvements"
   ]
 }

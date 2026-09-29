@@ -75,6 +75,12 @@ class UpdateManager(private val context: Context) {
     }
 
     suspend fun downloadAndInstallUpdate(updateInfo: UpdateInfo) = withContext(Dispatchers.IO) {
+        val variant = updateInfo.getVariantForDevice()
+        if (variant.apkUrl.isBlank()) {
+            _updateState.value = UpdateState.Error("Invalid update configuration: Missing APK URL.")
+            return@withContext
+        }
+
         val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
         val apkFile = File(updatesDir, "Veyro_update_${updateInfo.versionCode}.apk")
 
@@ -83,7 +89,7 @@ class UpdateManager(private val context: Context) {
         }
 
         try {
-            val request = Request.Builder().url(updateInfo.apkUrl).build()
+            val request = Request.Builder().url(variant.apkUrl).build()
             val response = okHttpClient.newCall(request).execute()
 
             if (!response.isSuccessful || response.body == null) {
@@ -108,21 +114,23 @@ class UpdateManager(private val context: Context) {
                 }
             }
 
-            // Size check if size is specified and totalBytes is known correctly, or skip size verify if totalBytes = -1
-            if (updateInfo.size > 0 && apkFile.length() != updateInfo.size) {
+            // Size check if size is specified
+            if (variant.size > 0 && apkFile.length() != variant.size) {
                 apkFile.delete()
                 _updateState.value = UpdateState.Error("Update verification failed: Size mismatch.")
                 return@withContext
             }
 
             // Verify SHA-256
-            _updateState.value = UpdateState.Verifying
-            val calculatedHash = calculateSHA256(apkFile)
+            if (variant.sha256.isNotBlank()) {
+                _updateState.value = UpdateState.Verifying
+                val calculatedHash = calculateSHA256(apkFile)
 
-            if (!calculatedHash.equals(updateInfo.sha256, ignoreCase = true)) {
-                apkFile.delete()
-                _updateState.value = UpdateState.Error("Update verification failed: SHA-256 mismatch. The file may be corrupted.")
-                return@withContext
+                if (!calculatedHash.equals(variant.sha256, ignoreCase = true)) {
+                    apkFile.delete()
+                    _updateState.value = UpdateState.Error("Update verification failed: SHA-256 mismatch. The file may be corrupted.")
+                    return@withContext
+                }
             }
 
             _updateState.value = UpdateState.ReadyToInstall(apkFile)
