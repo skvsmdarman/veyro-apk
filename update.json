@@ -26,7 +26,7 @@
       "sha256": "a0983f55cfdef332bc0ed8d27b1ad803b2e0275b9dc074f7ac065622316b01ed"
     }
   },
-  "mandatory": false,
+  "mandatory": true,
   "title": "Veyro 1.1.8",
   "changelog": [
     "VLESS XUDP packet encapsulation for national firewall proxies",
