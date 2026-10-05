@@ -29,9 +29,6 @@
   "mandatory": true,
   "title": "Veyro 1.2.0",
   "changelog": [
-    "Updated high-tech Vector & Adaptive Launcher Icons",
-    "Redesigned Minimal Splash Fading screen",
-    "Added Region and Country filter chips to Server List",
     "Automatic server sorting by lowest latency within selected region/country",
     "Performance and stability improvements"
   ]
