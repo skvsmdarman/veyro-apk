@@ -26,7 +26,7 @@
       "sha256": "08b87575e453d2d2db26de99f5d9d58e96770b5b20096172132b9f8a4b5a254d"
     }
   },
-  "mandatory": false,
+  "mandatory": true,
   "title": "Veyro 1.2.0",
   "changelog": [
     "Updated high-tech Vector & Adaptive Launcher Icons",
