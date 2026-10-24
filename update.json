@@ -26,7 +26,7 @@
       "sha256": "6b1cba1827d8402b8fc35efe0490e17c1d9df577b7155df28521288ff7abe1ea"
     }
   },
-  "mandatory": false,
+  "mandatory": true,
   "title": "Veyro 3.0.1",
   "changelog": [
     "Improved App-Triggered Auto-Connect overlay controls",
