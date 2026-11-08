@@ -1,38 +1,45 @@
 {
-  "versionCode": 7,
-  "versionName": "3.0.1",
-  "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.0.1/Veyro-3.0.1-universal.apk",
-  "size": 95230692,
-  "sha256": "b6ed5be05d094447ce73f16642615a133462b2c51bf8fcf2dd2af24e7de448ec",
+  "versionCode": 8,
+  "versionName": "3.1.0",
+  "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.1.0/Veyro-3.1.0-universal.apk",
+  "size": 95388243,
+  "sha256": "1e54b703a3070871736cc4d501fdbb4d35f4fddb244bbd2e4feba202d47046ad",
   "variants": {
     "arm64-v8a": {
-      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.0.1/Veyro-3.0.1-arm64-v8a.apk",
-      "size": 25506475,
-      "sha256": "f835387eb0e880b7df06b1b89dc95ddd0de38c5147bec038f4a3e0f9c34efacc"
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.1.0/Veyro-3.1.0-arm64-v8a.apk",
+      "size": 25664026,
+      "sha256": "daa8c32f3f6dcfd01d83391d748441e2f5a44d355c8d0510dd12a87792c499f3"
     },
     "armeabi-v7a": {
-      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.0.1/Veyro-3.0.1-armeabi-v7a.apk",
-      "size": 25010721,
-      "sha256": "eb548e7fa14816f0062e12be080175095e2ed6416d965a2ff3f47d13e0b9cf66"
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.1.0/Veyro-3.1.0-armeabi-v7a.apk",
+      "size": 25168272,
+      "sha256": "6c1c9c193458676d94692f2602bf5c5c4165c0d884d5dfaba1191fe63822fbb6"
     },
     "x86_64": {
-      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.0.1/Veyro-3.0.1-x86_64.apk",
-      "size": 26721872,
-      "sha256": "0e434ca63ce58838c5428ca9fa908e4577e965866b9cec072974d68c90b6d75e"
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.1.0/Veyro-3.1.0-x86_64.apk",
+      "size": 26879419,
+      "sha256": "cf927856c03084c72d77ba4a96742327836702f23d44918880b29e938efc6a35"
     },
     "x86": {
-      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.0.1/Veyro-3.0.1-x86.apk",
-      "size": 27557181,
-      "sha256": "6b1cba1827d8402b8fc35efe0490e17c1d9df577b7155df28521288ff7abe1ea"
+      "apkUrl": "https://github.com/skvsmdarman/veyro-apk/releases/download/v3.1.0/Veyro-3.1.0-x86.apk",
+      "size": 27714732,
+      "sha256": "74a346d10903cc1e9bd2a04e44ca7a552cd8799af67a0071405e6b617bfa1d9e"
     }
   },
-  "mandatory": true,
-  "title": "Veyro 3.0.1",
+  "mandatory": false,
+  "title": "Veyro 3.1.0",
   "changelog": [
-    "Improved App-Triggered Auto-Connect overlay controls",
-    "Complete High-Tech Redesign with AppDock Navigation",
-    "VLESS XUDP packet encapsulation for national firewall proxies",
-    "Real data throughput measurement and speed ranking",
-    "Performance and stability improvements"
+    "Content Blocking — in-tunnel ad, tracker and public-tracker domain blocking (toggle per category)",
+    "Exit-IP card — see the IP the world sees, with IP & DNS protection check",
+    "Privacy Scorecard in Diagnostics — score ring measuring IP protection, DNS privacy and HTTPS reachability",
+    "7-day usage history with bar chart on Speed tab",
+    "Node stability chips on the Nodes list (from benchmark history)",
+    "Hysteria2 protocol support (import hysteria2:// / hy2:// links)",
+    "Auto-Switch (urltest) — the core hops to the fastest node on its own",
+    "Per-app split tunneling — choose which apps ride the tunnel",
+    "Quick Settings tile for one-tap connect/disconnect",
+    "Live-speed notification with session timer and Disconnect action",
+    "Always-On VPN support (system kill switch ready)",
+    "Auto-reconnect on network change (WiFi ↔ mobile)"
   ]
 }
