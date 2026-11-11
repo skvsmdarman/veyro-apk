@@ -26,7 +26,7 @@
       "sha256": "74a346d10903cc1e9bd2a04e44ca7a552cd8799af67a0071405e6b617bfa1d9e"
     }
   },
-  "mandatory": false,
+  "mandatory": true,
   "title": "Veyro 3.1.0",
   "changelog": [
     "Content Blocking — in-tunnel ad, tracker and public-tracker domain blocking (toggle per category)",
